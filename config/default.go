@@ -34,7 +34,7 @@ type githubConfig struct {
 type supportedServerEnvironments struct {
 }
 
-func (c *Config) setupConfig() {
+func (c *Config) SetupConfig() {
 	c.Initialized = true
 	c.AwsEnabled = false
 	c.configureAws()
