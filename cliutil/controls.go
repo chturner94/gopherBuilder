@@ -6,57 +6,38 @@ import (
 	"golang.org/x/term"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 )
 
-type KeybindMapping int
+// The keybindMapping type is an enum that represents the current input mode of the user.
+// This works similarly to vim's modes, where the user can either be in motion mode or input mode.
+// To set the default mode of StartCli, use the MotionState or InputState constants.
+type keybindMapping int
 
 const (
-	MotionState KeybindMapping = iota
+	MotionState keybindMapping = iota
 	InputState
 )
 
-type UserControlState struct {
-	sync.Mutex
-	mode   KeybindMapping
-	locked bool
-}
-
-//var state = UserControlState{mode: MotionState}
-
-func (s *UserControlState) LockModeSwitching() {
-	s.Lock()
-	defer s.Unlock()
-	s.locked = true
-}
-
-func (s *UserControlState) UnlockModeSwitching() {
-	s.Lock()
-	defer s.Unlock()
-	s.locked = false
-}
-
-//var (
-//	state      int
-//	stateMutex sync.Mutex
-//	stateLocked bool
-//)
-
-type InputKey string
+// The inputKey type allows you to define input characters that are made available outputMap for remapping
+// keys. These mappings are only enabled during motion mode, and otherwise will work normally in input mode.
+type inputKey string
 
 const (
-	Up         InputKey = "k"
-	Down       InputKey = "j"
-	Left       InputKey = "h"
-	Right      InputKey = "l"
-	InputMode  InputKey = "i"
-	MotionMode InputKey = "\033" // Escape key is represented by the escape character
+	Up         inputKey = "k"
+	Down       inputKey = "j"
+	Left       inputKey = "h"
+	Right      inputKey = "l"
+	InputMode  inputKey = "i"
+	MotionMode inputKey = "\033" // Escape key is represented by the escape character
 )
 
-type OutputMap string
+// The outputMap type is the expected type for the keymap variable, which is used for remapping keys.
+type outputMap string
 
-var keymap = map[InputKey]OutputMap{
+// The keymap variable expects the inputKey type as a key, and a string value as the outputMap type. This
+// is later used in the detectInput function to remap keys.
+var keymap = map[inputKey]outputMap{
 	Up:         "\033[1A",
 	Down:       "\033[1B",
 	Right:      "\033[1C",
@@ -65,23 +46,15 @@ var keymap = map[InputKey]OutputMap{
 	MotionMode: "",
 }
 
-func handleUndefinedKey(input InputKey) OutputMap {
-	return OutputMap(input)
+// The passthroughsInputKey function is used when we wish to override the outputMap for a given inputKey,
+// or to pass through any key that is not defined in the keymap variable.
+func passthroughsInputKey(input inputKey) outputMap {
+	return outputMap(input)
 }
 
-//func LockState() {
-//	stateMutex.Lock()
-//	defer stateMutex.Unlock()
-//	stateLocked = true
-//}
-
-// func UnlockState() {
-// 	stateMutex.Lock()
-// 	defer stateMutex.Unlock()
-// 	stateLocked = false
-// }
-
-func ReadUserInput() string {
+// The readUserInput function is used to read a single character from the terminal. It also sets the
+// terminal to raw mode, which allows us to read a single character at a time.
+func readUserInput() string {
 	// Get the terminal state to enable raw mode
 	oldState, err := term.MakeRaw(0)
 	if err != nil {
@@ -118,33 +91,10 @@ func ReadUserInput() string {
 	return string(char)
 }
 
-// func DetectInput(input InputKey) OutputMap {
-// 	stateMutex.Lock()
-// 	defer stateMutex.Unlock()
-
-// 	switch state {
-// 	case MotionState:
-// 		if !stateLocked && input == InputMode {
-// 			state = InputState
-// 			return "Input Mode"
-// 		}
-// 		if mappedKey, ok := keymap[input]; ok {
-// 			fmt.Print("Motion State:", mappedKey)
-// 			return mappedKey
-// 		}
-// 		return handleUndefinedKey(input)
-// 	case InputState:
-// 		if !stateLocked && input == MotionMode {
-// 			state = MotionState
-// 			return "Motion Mode"
-// 		}
-// 		fmt.Print("Input State:", input)
-// 		return OutputMap(input)
-// 	}
-// 	return ""
-// }
-
-func DetectInput(input InputKey, stateObject *UserControlState) OutputMap {
+// The detectInput function is used to determine what action to take based on the inputKey type. If the
+// inputKey type is defined in the keymap variable, then the outputMap type is returned. Otherwise, the
+// inputKey type is passed through to the passthroughsInputKey function.
+func detectInput(input inputKey, stateObject *UserControlState) outputMap {
 
 	switch stateObject.mode {
 	case MotionState:
@@ -156,28 +106,14 @@ func DetectInput(input InputKey, stateObject *UserControlState) OutputMap {
 			fmt.Print("Motion State:", mappedKey)
 			return mappedKey
 		}
-		return handleUndefinedKey(input)
+		return passthroughsInputKey(input)
 	case InputState:
 		if !stateObject.locked && input == MotionMode {
 			stateObject.mode = MotionState
 			return "Motion Mode"
 		}
 		fmt.Print("Input State:", input)
-		return OutputMap(input)
+		return outputMap(input)
 	}
 	return ""
-}
-
-func (s *UserControlState) StartCli(initialState KeybindMapping, locked bool) {
-	s.Lock()
-	defer s.Unlock()
-	s.mode = initialState
-	s.locked = locked
-
-	fmt.Println("Welcome to Motion Mode (Use h(left) j(down) k(up) l(right) to move, i to enter Input Mode, and Esc to Move Again!)")
-	for {
-		userInput := ReadUserInput()
-		action := DetectInput(InputKey(userInput), s)
-		fmt.Println(action)
-	}
 }
