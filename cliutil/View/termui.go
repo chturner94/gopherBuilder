@@ -1,36 +1,186 @@
 package view
 
 import (
+	"github.com/chturner94/gopherBuilder/cliutil/View/utils"
 	"image"
+	"sync"
 
 	"github.com/chturner94/gopherBuilder/cliutil/View/modules"
 	"github.com/chturner94/gopherBuilder/cliutil/View/style"
 )
 
-type viewItemType uint
+type canvasItemType uint
 
 const (
-	col viewItemType = iota
+	col canvasItemType = iota
 	row
 )
 
+var viewInstance *View
+var once sync.Once
+
 type View struct {
-	rowColumnType viewItemType
-	canvas        []Canvas
-	width         int
-	height        int
-	offsetX       int
-	offsetY       int
-	cursorX       int
-	cursorY       int
-	zoom          float64
+	canvas  []Canvas
+	Width   int
+	Height  int
+	offsetX int
+	offsetY int
+	cursorX int
+	cursorY int
+	zoom    float64
+}
+
+func GetViewInstance() *View {
+	once.Do(func() {
+		width, height := utils.GetTerminalSize()
+		viewInstance = &View{
+			Width:  width,
+			Height: height,
+		}
+	})
+	return viewInstance
 }
 
 type Canvas struct {
-	height  int
-	width   int
-	modules []modules.Module
-	Cell    [][]Cell
+	modules.Module
+	Objects []*CanvasObject
+}
+
+type CanvasObject struct {
+	rowColumnType canvasItemType
+	XRatio        float64
+	YRatio        float64
+	WidthRatio    float64
+	HeightRatio   float64
+	ratio         float64
+	Entry         interface{}
+	IsLeaf        bool
+	Cell          [][]Cell
+}
+
+func NewCanvas() *Canvas {
+	c := &Canvas{
+		Module: *modules.NewModule(),
+	}
+	c.Border = false
+	return c
+}
+
+func NewCol(ratio float64, i ...interface{}) CanvasObject {
+	_, ok := i[0].(Drawable)
+	entry := i[0]
+	if !ok {
+		entry = i
+	}
+	return CanvasObject{
+		rowColumnType: col,
+		Entry:         entry,
+		IsLeaf:        ok,
+		ratio:         ratio,
+	}
+}
+
+func NewRow(ratio float64, i ...interface{}) CanvasObject {
+	_, ok := i[0].(Drawable)
+	entry := i[0]
+	if !ok {
+		entry = i
+	}
+	return CanvasObject{
+		rowColumnType: row,
+		Entry:         entry,
+		IsLeaf:        ok,
+		ratio:         ratio,
+	}
+}
+
+func (self *Canvas) Set(module ...interface{}) {
+	entry := CanvasObject{
+		rowColumnType: row,
+		Entry:         module,
+		IsLeaf:        false,
+		ratio:         1.0,
+	}
+	self.setHelper(entry, 1.0, 1.0)
+}
+
+func (self *Canvas) setHelper(object CanvasObject, parentWidthRatio, parentHeightRatio float64) {
+	var HeightRatio float64
+	var WidthRatio float64
+	switch object.rowColumnType {
+	case col:
+		HeightRatio = 1.0
+		WidthRatio = object.ratio
+	case row:
+		HeightRatio = object.ratio
+		WidthRatio = 1.0
+	}
+	object.WidthRatio = parentWidthRatio * WidthRatio
+	object.HeightRatio = parentHeightRatio * HeightRatio
+
+	if object.IsLeaf {
+		self.Objects = append(self.Objects, &object)
+	} else {
+		XRatio := 0.0
+		YRatio := 0.0
+		cols := false
+		rows := false
+
+		children := utils.InterfaceSlice(object.Entry)
+
+		for i := 0; i < len(children); i++ {
+			if children[i] == nil {
+				continue
+			}
+			child, _ := children[i].(CanvasObject)
+
+			child.XRatio = object.XRatio + (object.WidthRatio * XRatio)
+			child.YRatio = object.YRatio + (object.HeightRatio * YRatio)
+
+			switch child.rowColumnType {
+			case col:
+				cols = true
+				XRatio += child.ratio
+				if rows {
+					object.HeightRatio /= 2
+				}
+			case row:
+				rows = true
+				YRatio += child.ratio
+				if cols {
+					object.WidthRatio /= 2
+				}
+			}
+			self.setHelper(child, object.WidthRatio, object.HeightRatio)
+		}
+	}
+}
+
+func (self *Canvas) Draw(buf *Buffer) {
+	width := float64(self.Dx()) + 1
+	height := float64(self.Dy()) + 1
+
+	for _, object := range self.Objects {
+		entry, _ := object.Entry.(Drawable)
+
+		x := int(width*object.XRatio) + self.Min.X
+		y := int(height*object.YRatio) + self.Min.Y
+		w := int(width * object.WidthRatio)
+		h := int(height * object.HeightRatio)
+
+		if x+w > self.Dx() {
+			w--
+		}
+		if y+h > self.Dy() {
+			h--
+		}
+
+		entry.SetRect(x, y, x+w, y+h)
+
+		entry.Lock()
+		entry.Draw(buf)
+		entry.Unlock()
+	}
 }
 
 type Buffer struct {
@@ -72,7 +222,7 @@ func (self *Buffer) SetString(s string, style style.Style, p image.Point) {
 	}
 }
 
-// Replace with a golang.org/x/text/width implementation
+// Replace with a golang.org/x/text/Width implementation
 func charWidth(char rune) int {
 	if char == '\t' {
 		return 4
