@@ -4,6 +4,7 @@ import (
 	view "github.com/chturner94/gopherBuilder/cliutil/View"
 	"github.com/chturner94/gopherBuilder/cliutil/View/style"
 	"github.com/chturner94/gopherBuilder/cliutil/View/utils"
+	"image"
 )
 
 type Text struct {
@@ -11,6 +12,11 @@ type Text struct {
 	Text      string
 	TextStyle style.Style
 	WrapText  bool
+}
+
+func (self *Text) GetRect() image.Rectangle {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewText() *Text {
@@ -35,6 +41,9 @@ func (self *Text) Draw(buf *view.Buffer) {
 		if y+self.Inner.Min.Y >= self.Inner.Max.Y {
 			break
 		}
-		row = TrimCell
+		row = utils.TrimCells(row, self.Inner.Max.Y)
+		break
+		{
+		}
 	}
 }

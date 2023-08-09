@@ -4,6 +4,8 @@ import (
 	"bytes"
 	view "github.com/chturner94/gopherBuilder/cliutil/View"
 	"github.com/chturner94/gopherBuilder/cliutil/View/style"
+	rw "github.com/mattn/go-runewidth"
+	"go/token"
 	"log"
 	"os"
 	"os/exec"
@@ -193,8 +195,7 @@ func TrimString(s string, w int) string {
 		return ""
 	}
 	if rw.StringWidth(s) > w {
-		return rw.Truncate(s, w, string(ELLIPSES))
+		return rw.Truncate(s, w, string(token.ELLIPSIS))
 	}
 	return s
 }
-n 

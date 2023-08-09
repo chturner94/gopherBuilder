@@ -43,7 +43,7 @@ func (m *Module) SetRect(x1, y1, x2, y2 int) {
 	m.Inner = image.Rect(x1, y1, x2, y2)
 }
 
-func (m *Module) Draw(canvas view.Canvas) {
+func (m *Module) Draw(canvas *view.Buffer) {
 	m.Lock()
 	defer m.Unlock()
 	startX := m.Inner.Min.X

@@ -1,6 +1,7 @@
 package main
 
 import (
+	view "github.com/chturner94/gopherBuilder/cliutil/View"
 	"github.com/chturner94/gopherBuilder/cliutil/View/modules"
 	"github.com/chturner94/gopherBuilder/cliutil/View/style"
 	"github.com/gdamore/tcell/termbox"
@@ -13,7 +14,12 @@ func main() {
 	}
 	defer Close()
 
-	p0 := modules.
+	p0 := modules.NewText()
+	p0.Text = "Hello World!"
+	p0.SetRect(0, 0, 20, 5)
+	p0.Border = false
+
+	view.Render(p0)
 }
 
 func TerminalSize() (int, int) {
