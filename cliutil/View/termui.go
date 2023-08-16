@@ -1,12 +1,8 @@
 package view
 
 import (
-	"github.com/chturner94/gopherBuilder/cliutil/View/utils"
 	"image"
 	"sync"
-
-	"github.com/chturner94/gopherBuilder/cliutil/View/modules"
-	"github.com/chturner94/gopherBuilder/cliutil/View/style"
 )
 
 type canvasItemType uint
@@ -32,7 +28,7 @@ type View struct {
 
 func GetViewInstance() *View {
 	once.Do(func() {
-		width, height := utils.GetTerminalSize()
+		width, height := GetTerminalSize()
 		viewInstance = &View{
 			Width:  width,
 			Height: height,
@@ -42,7 +38,7 @@ func GetViewInstance() *View {
 }
 
 type Canvas struct {
-	modules.Module
+	Module
 	Objects []*CanvasObject
 }
 
@@ -60,7 +56,7 @@ type CanvasObject struct {
 
 func NewCanvas() *Canvas {
 	c := &Canvas{
-		Module: *modules.NewModule(),
+		Module: *NewModule(),
 	}
 	c.Border = false
 	return c
@@ -126,7 +122,7 @@ func (self *Canvas) setHelper(object CanvasObject, parentWidthRatio, parentHeigh
 		cols := false
 		rows := false
 
-		children := utils.InterfaceSlice(object.Entry)
+		children := InterfaceSlice(object.Entry)
 
 		for i := 0; i < len(children); i++ {
 			if children[i] == nil {
@@ -213,7 +209,7 @@ func (self *Buffer) Fill(c Cell, r image.Rectangle) {
 	}
 }
 
-func (self *Buffer) SetString(s string, style style.Style, p image.Point) {
+func (self *Buffer) SetString(s string, style Style, p image.Point) {
 	runes := []rune(s)
 	x := 0
 	for _, char := range runes {
@@ -236,18 +232,18 @@ func charWidth(char rune) int {
 
 type Cell struct {
 	Rune  rune
-	Style style.Style
+	Style Style
 }
 
 var CellEmpty = Cell{
 	Rune:  ' ',
-	Style: style.StyleClear,
+	Style: StyleClear,
 }
 
 func NewCell(rune rune, args ...interface{}) Cell {
-	updateStyle := style.StyleClear
+	updateStyle := StyleClear
 	if len(args) == 1 {
-		updateStyle = args[0].(style.Style)
+		updateStyle = args[0].(Style)
 	}
 	return Cell{
 		Rune:  rune,

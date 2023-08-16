@@ -1,6 +1,4 @@
-package style
-
-import "github.com/chturner94/gopherBuilder/cliutil/View"
+package view
 
 var BaseColors = []Color{
 	ColorBlack,
@@ -14,14 +12,14 @@ var BaseColors = []Color{
 }
 
 var BaseStyles = []Style{
-	view.NewStyle(ColorBlack),
-	view.NewStyle(ColorRed),
-	view.NewStyle(ColorGreen),
-	view.NewStyle(ColorYellow),
-	view.NewStyle(ColorBlue),
-	view.NewStyle(ColorMagenta),
-	view.NewStyle(ColorCyan),
-	view.NewStyle(ColorWhite),
+	NewStyle(ColorBlack),
+	NewStyle(ColorRed),
+	NewStyle(ColorGreen),
+	NewStyle(ColorYellow),
+	NewStyle(ColorBlue),
+	NewStyle(ColorMagenta),
+	NewStyle(ColorCyan),
+	NewStyle(ColorWhite),
 }
 
 // BaseTheme is where all the mappings for modules and the corresponding Type, which defines the expected properties
@@ -49,13 +47,13 @@ type TextTheme struct {
 }
 
 var Theme = BaseTheme{
-	Default: view.NewStyle(ColorWhite),
+	Default: NewStyle(ColorWhite),
 
 	Module: ModuleTheme{
-		Title:  view.NewStyle(ColorWhite),
-		Border: view.NewStyle(ColorWhite),
+		Title:  NewStyle(ColorWhite),
+		Border: NewStyle(ColorWhite),
 	},
 	Text: TextTheme{
-		Text: view.NewStyle(ColorWhite),
+		Text: NewStyle(ColorWhite),
 	},
 }

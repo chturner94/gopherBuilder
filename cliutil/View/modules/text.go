@@ -2,27 +2,20 @@ package modules
 
 import (
 	view "github.com/chturner94/gopherBuilder/cliutil/View"
-	"github.com/chturner94/gopherBuilder/cliutil/View/style"
-	"github.com/chturner94/gopherBuilder/cliutil/View/utils"
 	"image"
 )
 
 type Text struct {
-	Module
+	view.Module
 	Text      string
-	TextStyle style.Style
+	TextStyle view.Style
 	WrapText  bool
-}
-
-func (self *Text) GetRect() image.Rectangle {
-	//TODO implement me
-	panic("implement me")
 }
 
 func NewText() *Text {
 	return &Text{
-		Module:    *NewModule(),
-		TextStyle: style.Theme.Text.Text,
+		Module:    *view.NewModule(),
+		TextStyle: view.Theme.Text.Text,
 		WrapText:  true,
 	}
 }
@@ -30,20 +23,21 @@ func NewText() *Text {
 func (self *Text) Draw(buf *view.Buffer) {
 	self.Module.Draw(buf)
 
-	cells := style.ParseStyles(self.Text, self.TextStyle)
+	cells := view.ParseStyles(self.Text, self.TextStyle)
 	if self.WrapText {
-		cells = utils.WrapCells(cells, uint(self.Inner.Dx()))
+		cells = view.WrapCells(cells, uint(self.Inner.Dx()))
 	}
 
-	rows := utils.SplitCells(cells, '\n')
+	rows := view.SplitCells(cells, '\n')
 
 	for y, row := range rows {
 		if y+self.Inner.Min.Y >= self.Inner.Max.Y {
 			break
 		}
-		row = utils.TrimCells(row, self.Inner.Max.Y)
-		break
-		{
+		row = view.TrimCells(row, self.Inner.Dx())
+		for _, cx := range view.BuildCellWithXArray(row) {
+			x, cell := cx.X, cx.Cell
+			buf.SetCell(cell, image.Pt(x, y).Add(self.Inner.Min))
 		}
 	}
 }

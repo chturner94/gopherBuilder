@@ -1,8 +1,6 @@
-package style
+package view
 
 import (
-	view "github.com/chturner94/gopherBuilder/cliutil/View"
-	utils "github.com/chturner94/gopherBuilder/cliutil/View/utils"
 	"strings"
 )
 
@@ -64,8 +62,8 @@ func readStyle(runes []rune, defaultStyle Style) Style {
 	return style
 }
 
-func ParseStyles(s string, defaultStyle Style) []view.Cell {
-	var cells []view.Cell
+func ParseStyles(s string, defaultStyle Style) []Cell {
+	var cells []Cell
 	runes := []rune(s)
 	state := parserStateDefault
 	var styledText []rune
@@ -80,8 +78,8 @@ func ParseStyles(s string, defaultStyle Style) []view.Cell {
 	}
 
 	rollback := func() {
-		cells = append(cells, utils.RunesToStyledCells(styledText, defaultStyle)...)
-		cells = append(cells, utils.RunesToStyledCells(styledItems, defaultStyle)...)
+		cells = append(cells, RunesToStyledCells(styledText, defaultStyle)...)
+		cells = append(cells, RunesToStyledCells(styledItems, defaultStyle)...)
 		reset()
 	}
 
@@ -97,7 +95,7 @@ func ParseStyles(s string, defaultStyle Style) []view.Cell {
 				squareCount = 1
 				styledText = append(styledText, _rune)
 			} else {
-				cells = append(cells, view.Cell{Rune: _rune, Style: defaultStyle})
+				cells = append(cells, Cell{Rune: _rune, Style: defaultStyle})
 			}
 		case parserStateStyledText:
 			switch {
@@ -114,7 +112,7 @@ func ParseStyles(s string, defaultStyle Style) []view.Cell {
 						squareCount = 1
 						styledItems = append(styledItems, _rune)
 					default:
-						cells = append(cells, view.Cell{Rune: _rune, Style: defaultStyle})
+						cells = append(cells, Cell{Rune: _rune, Style: defaultStyle})
 					}
 				}
 			case len(runes) == i+1:
@@ -133,7 +131,7 @@ func ParseStyles(s string, defaultStyle Style) []view.Cell {
 			styledItems = append(styledItems, _rune)
 			if _rune == tokenEndStyle {
 				style := readStyle(chop(styledItems), defaultStyle)
-				cells = append(cells, utils.RunesToStyledCells(chop(styledText), style)...)
+				cells = append(cells, RunesToStyledCells(chop(styledText), style)...)
 				reset()
 			} else if len(runes) == i+1 {
 				rollback()

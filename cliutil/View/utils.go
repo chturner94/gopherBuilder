@@ -1,9 +1,7 @@
-package utils
+package view
 
 import (
 	"bytes"
-	view "github.com/chturner94/gopherBuilder/cliutil/View"
-	"github.com/chturner94/gopherBuilder/cliutil/View/style"
 	rw "github.com/mattn/go-runewidth"
 	"go/token"
 	"log"
@@ -39,10 +37,10 @@ func GetTerminalSize() (int, int) {
 	return height, width
 }
 
-func RunesToStyledCells(runes []rune, style style.Style) []view.Cell {
-	cells := []view.Cell{}
+func RunesToStyledCells(runes []rune, style Style) []Cell {
+	cells := []Cell{}
 	for _, _rune := range runes {
-		cells = append(cells, view.Cell{_rune, style})
+		cells = append(cells, Cell{_rune, style})
 	}
 	return cells
 }
@@ -63,7 +61,7 @@ func InterfaceSlice(slice interface{}) []interface{} {
 
 func UpdateTerminalSize() error {
 	w, h := GetTerminalSize()
-	view := view.GetViewInstance()
+	view := GetViewInstance()
 	if w != view.Width || h != view.Height {
 		view.Width = w
 		view.Height = h
@@ -71,23 +69,23 @@ func UpdateTerminalSize() error {
 	return nil
 }
 
-func WrapCells(cells []view.Cell, width uint) []view.Cell {
+func WrapCells(cells []Cell, width uint) []Cell {
 	str := CellsToString(cells)
 	wrapped := WrapString(str, width)
-	wrappedCells := []view.Cell{}
+	wrappedCells := []Cell{}
 	i := 0
 	for _, _rune := range wrapped {
 		if _rune == '\n' {
-			wrappedCells = append(wrappedCells, view.Cell{_rune, style.StyleClear})
+			wrappedCells = append(wrappedCells, Cell{_rune, StyleClear})
 		} else {
-			wrappedCells = append(wrappedCells, view.Cell{_rune, cells[i].Style})
+			wrappedCells = append(wrappedCells, Cell{_rune, cells[i].Style})
 		}
 		i++
 	}
 	return wrappedCells
 }
 
-func CellsToString(cells []view.Cell) string {
+func CellsToString(cells []Cell) string {
 	runes := make([]rune, len(cells))
 	for i, cell := range cells {
 		runes[i] = cell.Rune
@@ -162,13 +160,13 @@ func WrapString(s string, lim uint) string {
 	return buf.String()
 }
 
-func SplitCells(cells []view.Cell, r rune) [][]view.Cell {
-	splitCells := [][]view.Cell{}
-	temp := []view.Cell{}
+func SplitCells(cells []Cell, r rune) [][]Cell {
+	splitCells := [][]Cell{}
+	temp := []Cell{}
 	for _, cell := range cells {
 		if cell.Rune == r {
 			splitCells = append(splitCells, temp)
-			temp = []view.Cell{}
+			temp = []Cell{}
 		} else {
 			temp = append(temp, cell)
 		}
@@ -179,13 +177,13 @@ func SplitCells(cells []view.Cell, r rune) [][]view.Cell {
 	return splitCells
 }
 
-func TrimCells(cells []view.Cell, w int) []view.Cell {
+func TrimCells(cells []Cell, w int) []Cell {
 	s := CellsToString(cells)
 	s = TrimString(s, w)
 	runes := []rune(s)
-	newCells := []view.Cell{}
+	newCells := []Cell{}
 	for i, r := range runes {
-		newCells = append(newCells, view.Cell{r, cells[i].Style})
+		newCells = append(newCells, Cell{r, cells[i].Style})
 	}
 	return newCells
 }
@@ -198,4 +196,19 @@ func TrimString(s string, w int) string {
 		return rw.Truncate(s, w, string(token.ELLIPSIS))
 	}
 	return s
+}
+
+type CellWithX struct {
+	X    int
+	Cell Cell
+}
+
+func BuildCellWithXArray(cells []Cell) []CellWithX {
+	cellWithXArray := make([]CellWithX, len(cells))
+	index := 0
+	for i, cell := range cells {
+		cellWithXArray[i] = CellWithX{X: index, Cell: cell}
+		index += rw.RuneWidth(cell.Rune)
+	}
+	return cellWithXArray
 }

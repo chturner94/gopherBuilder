@@ -1,4 +1,4 @@
-package style
+package view
 
 const (
 	DOT      = '•'
@@ -53,4 +53,17 @@ var (
 
 	SINGLE_BRAILLE_LEFT  = [4]rune{'\u2840', '⠄', '⠂', '⠁'}
 	SINGLE_BRAILLE_RIGHT = [4]rune{'\u2880', '⠠', '⠐', '⠈'}
+)
+
+const (
+	TOP_LEFT_CORNER     = '┌'
+	TOP_RIGHT_CORNER    = '┐'
+	BOTTOM_LEFT_CORNER  = '└'
+	BOTTOM_RIGHT_CORNER = '┘'
+
+	HORIZONTAL_LINE = '─'
+	VERTICAL_LINE   = '│'
+
+	QUOTA_LEFT  = '«'
+	QUOTA_RIGHT = '»'
 )

@@ -1,4 +1,4 @@
-package style
+package view
 
 type Style struct {
 	Fg       Color
