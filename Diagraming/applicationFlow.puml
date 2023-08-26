@@ -1,0 +1,26 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+start
+:Run Application;
+:Check for configuration;
+if (Configuration file exists?) then (yes)
+:Load Configuration;
+else (no)
+:Create Configuration file;
+:Run initial setup and write configuration for future runs;
+endif
+:Load data from configuration and start application;
+:load application menu;
+split
+:Build Module;
+split again
+:Configuration Menu;
+split again
+:Register Agent Module;
+split again
+:Monitoring Module;
+
+end split
+
+stop
+@enduml
